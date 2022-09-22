@@ -10,6 +10,7 @@ class Player(pygame.sprite.Sprite):
         self.import_assets()
         self.status = 'down_idle'
         self.frame_index = 0
+        self.z = LAYERS['main']
         # general setup
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(center=pos)
