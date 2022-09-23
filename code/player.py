@@ -5,15 +5,20 @@ from timer import Timer
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, group):
+    def __init__(self, pos, group, collision_sprites):
         super().__init__(group)
         self.import_assets()
         self.status = 'down_idle'
         self.frame_index = 0
         self.z = LAYERS['main']
+
         # general setup
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(center=pos)
+
+        # collisions
+        self.hitbox = self.rect.copy().inflate(-126, -70)
+        self.collision_sprites = collision_sprites
 
         # movement attributes
         self.direction = pygame.math.Vector2()
@@ -85,7 +90,6 @@ class Player(pygame.sprite.Sprite):
                 self.timers['seed use'].activate()
                 self.direction = pygame.math.Vector2()
                 self.frame_index = 0
-                print('seed use', self.selected_seed)
 
             # change seed
             if keys[pygame.K_e] and not self.timers['seed switch'].active:
@@ -130,6 +134,26 @@ class Player(pygame.sprite.Sprite):
         for timer in self.timers.values():
             timer.update()
 
+    def collision(self, direction):
+        for sprite in self.collision_sprites.sprites():
+            if hasattr(sprite, 'hitbox'):
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if direction == 'horizontal':
+                        if self.direction.x > 0:  # moving right
+                            self.hitbox.right = sprite.hitbox.left
+                        if self.direction.x < 0:  # moving left
+                            self.hitbox.left = sprite.hitbox.right
+                        self.rect.centerx = self.hitbox.centerx
+                        self.pos.x = self.hitbox.centerx
+
+                    if direction == 'vertical':
+                        if self.direction.y > 0:  # moving down
+                            self.hitbox.bottom = sprite.hitbox.top
+                        if self.direction.y < 0:  # moving up
+                            self.hitbox.top = sprite.hitbox.bottom
+                        self.rect.centery = self.hitbox.centery
+                        self.pos.y = self.hitbox.centery
+
     def move(self, dt):
         self.normalize_vector()
         # horizontal movement
@@ -137,13 +161,17 @@ class Player(pygame.sprite.Sprite):
         # vertical movement
         self.move_y(dt)
 
-    def move_y(self, dt):
-        self.pos.y += self.direction.y * self.speed * dt
-        self.rect.centery = self.pos.y
-
     def move_x(self, dt):
         self.pos.x += self.direction.x * self.speed * dt
-        self.rect.centerx = self.pos.x
+        self.hitbox.centerx = round(self.pos.x)
+        self.rect.centerx = self.hitbox.centerx
+        self.collision('horizontal')
+
+    def move_y(self, dt):
+        self.pos.y += self.direction.y * self.speed * dt
+        self.hitbox.centery = round(self.pos.y)
+        self.rect.centery = self.hitbox.centery
+        self.collision('vertical')
 
     def normalize_vector(self):
         # normalizing a vector
