@@ -77,8 +77,9 @@ class Tree(Generic):
         self.apple_surf = pygame.image.load('../graphics/fruit/apple.png')
         self.apple_pos = APPLE_POS[name]
         self.apple_sprites = pygame.sprite.Group()
-        self.player_add = player_add
         self.create_fruit()
+
+        self.player_add = player_add
 
     def create_fruit(self):
         for pos in self.apple_pos:
@@ -105,6 +106,7 @@ class Tree(Generic):
                 groups=self.groups()[0],
                 z=LAYERS['fruit']
             )
+            self.player_add('apple')
             random_apple.kill()
 
     def check_death(self):
@@ -120,6 +122,7 @@ class Tree(Generic):
             self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
             self.hitbox = self.rect.copy().inflate(-10, -self.rect.height * 0.6)
             self.alive = False
+            self.player_add('wood')
 
     def update(self, dt):
         if self.alive:
